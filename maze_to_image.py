@@ -31,15 +31,15 @@ class Maze():
     
     def convert(self):
         im = Image.new(mode="RGB", 
-                       size=(self.rows*self.columns*10, self.columns*self.rows*10),
+                       size=(self.columns*100,self.rows*100),
                        color=(255,255,255)
                        )
         for wall in self.walls:
             draw = ImageDraw.Draw(im)
-            x1 = wall[1]*10*self.rows
-            x2 = x1+self.rows*10
-            y1 = wall[0]*10*self.columns
-            y2 = y1+self.columns*10
+            x1 = wall[1]*100
+            x2 = x1+100
+            y1 = wall[0]*100
+            y2 = y1+100
             draw.rectangle(xy = (x1, y1, x2, y2), 
                 fill = (0, 0, 0), 
                 #outline = (255, 255, 255), 
@@ -49,5 +49,5 @@ class Maze():
            
         im.show()
         
-maze = Maze("maze1.txt")
+maze = Maze("maze3.txt")
 maze.convert()
