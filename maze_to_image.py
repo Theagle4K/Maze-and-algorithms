@@ -29,6 +29,34 @@ class Maze():
             col_int = 0
         return walls  
     
+    def find_start(self): # All wall cordinates must be gathered in one [], which can be used to determine which action is possible
+        row_int = 0
+        col_int = 0
+        cor = []
+        for row in self.contents:
+            for col in row:
+                if col == 'A':
+                    cor = [row_int,col_int] 
+                    return cor
+                else: 
+                    col_int+=1
+            row_int+=1
+            col_int = 0
+            
+    def find_end(self): # All wall cordinates must be gathered in one [], which can be used to determine which action is possible
+        row_int = 0
+        col_int = 0
+        cor = []
+        for row in self.contents:
+            for col in row:
+                if col == 'B':
+                    cor = [row_int,col_int] 
+                    return cor
+                else: 
+                    col_int+=1
+            row_int+=1
+            col_int = 0
+    
     def convert(self):
         im = Image.new(mode="RGB", 
                        size=(self.columns*100,self.rows*100),
@@ -46,8 +74,20 @@ class Maze():
                 #width = 10
             ) 
             #im.show()
+        start_cor = self.find_start()
+        draw.rectangle(xy = (start_cor[1]*100, start_cor[0]*100,start_cor[1]*100 + 100 , start_cor[0]*100 + 100), 
+            fill = (100, 200, 0), 
+            #outline = (255, 255, 255), 
+            #width = 10
+        ) 
+        end_cor = self.find_end()
+        draw.rectangle(xy = (end_cor[1]*100, end_cor[0]*100,end_cor[1]*100 + 100 , end_cor[0]*100 + 100), 
+            fill = (200, 100, 0), 
+            #outline = (255, 255, 255), 
+            #width = 10
+        ) 
            
         im.show()
         
-maze = Maze("maze3.txt")
+maze = Maze("maze2.txt")
 maze.convert()
