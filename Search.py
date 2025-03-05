@@ -146,8 +146,35 @@ class Maze():
             step+=1
         self.steps = step
         return visited   
-    
-    
+
+    def BFS_maze(self, Node, goal):
+        frontier = []
+        visited = []
+        step = 0   
+        frontier.append(Node)
+        
+        while True:
+            
+            if len(frontier) == 0:
+                print("No solution")
+                break
+            if Node.state == goal:
+                break
+            else:
+                visited.append(Node.state)
+                del frontier[0]
+            if Node.actions != []:
+                for action in Node.actions:
+                    new_Node = self.app_action(Node,action)
+                    new_Node.actions = self.det_actions(new_Node.state)
+                    if new_Node.state not in visited:
+                        frontier.append(new_Node)
+            if len(frontier) != 0:
+                Node = frontier[0]               
+            step+=1
+        self.steps = step
+        return visited    
+
     def det_actions(self,cor):
         actions = []
         # Up action = row - 1, col + 0
@@ -224,7 +251,7 @@ class Maze():
         start_cor = self.det_Start()
         end_cor = self.det_end()
         start_node = Node(None,self.det_actions(start_cor),start_cor) 
-        self.visited = self.DFS_maze(start_node,end_cor)
+        self.visited = self.BFS_maze(start_node,end_cor)
         self.convert()
         
 maze1 = Maze("maze3.txt")
