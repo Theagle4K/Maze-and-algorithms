@@ -1,54 +1,13 @@
 import sys
-from PIL import Image
+from PIL import Image, ImageDraw
 
-
+#A Node class to keep certain details about tiles in check
 class Node():
     def __init__(self,parent,actions,state):
-        self.parent = parent
-        self.actions = actions
-        self.state = state
+        self.parent = parent #To know which tile was previous tile
+        self.actions = actions #To keep what actions our Maze algorithm can apply
+        self.state = state #What state is our Node in
               
-        
-A = Node(None,[1],1)
-B = Node(A,[1,3],2)
-C = Node(B,[1],3)
-D = Node(C,[1],4)
-E = Node(B,[1],5)
-F = Node(E,[1],6)
-
-NodeArray = [A, B, C, D, E, F]
-def Action(state,action):
-    for node in NodeArray:
-        if node.state == state + action:
-            return node
-        
-
-def DFS(Node = Node, goal = int):
-    frontier = []
-    visited = []
-    step = 0
-    
-    frontier.append(Node)
-    
-    while True:
-        
-        if len(frontier) == 0:
-            print("No Solution")
-            break
-        
-        if Node.state == goal:
-            break
-        else:
-            visited.append(Node)
-            frontier.pop()
-            for action in Node.actions:
-                if Action(Node.state, action) is not None:
-                    frontier.append(Action(Node.state, action))
-            if len(frontier) != 0:        
-                Node = frontier[-1]    
-            
-        step+=1
-    return step
 
 def BFS(Node = Node, goal = int):
     frontier = []
@@ -79,23 +38,35 @@ def BFS(Node = Node, goal = int):
 
 #print(BFS(A,6))
 
+#Maze class
 class Maze():
     def __init__(self,filename):
         
-        
+        #Read the file to create it as a maze puzzle
         with open(filename) as file:
             contents = file.read()
         
+        #A represents our Start
         if contents.count("A") != 1:
             raise Exception("Maze must have a start point")
+        #B represents our Goal
         if contents.count("B") != 1:
             raise Exception("Maze must have a start point")
         
+        #Contents of the file
         self.contents = contents.splitlines()
+        #Rows of the maze (Y)
         self.rows = len(self.contents)
+        #Columns of our maze (X)
         self.columns = max(len(line) for line in self.contents)
+        #Walls of our Maze 
         self.walls = self.det_wall()
+        #To keep count of steps
+        self.steps = 0
+        #To keep count of visited tiles
+        self.visited = []
         
+    #Translates any coordinate to character (exists for testing reasons)    
     def cor_to_char(self,cor): #cor = [x,y], which x = row, y = col 
         if cor[0] > self.rows:
             raise Exception("Cordinates must be within the maze!") 
@@ -107,15 +78,21 @@ class Maze():
 #            raise Exception("Cordinates must be a number!")  
         return self.contents[cor[0]][cor[1]]
     
+    #Algorithm to determine walls
     def det_wall(self): # All wall cordinates must be gathered in one [], which can be used to determine which action is possible
+        #Variables to keep track of coordinates
         row_int = 0
         col_int = 0
+        #Array of walls
         walls = []
+        #Loop checks in every column in a row, 
         for row in self.contents:
             for col in row:
+                #if it's "#" then it encountered a wall
                 if col == '#':
                     walls.append([row_int,col_int]) 
                 col_int+=1
+            #Counters
             row_int+=1
             col_int = 0
         return walls  
@@ -167,7 +144,8 @@ class Maze():
                     Node = frontier[-1]    
                 
             step+=1
-        return step      
+        self.steps = step
+        return visited   
     
     
     def det_actions(self,cor):
@@ -187,13 +165,67 @@ class Maze():
                 actions.append([0,-1])
             if cor[1] + 1 < self.columns and [cor[0], cor[1] + 1] not in self.walls:
                 actions.append([0,1])  
-        return actions    
+        return actions   
+    
+    def det_end(self): # All wall cordinates must be gathered in one [], which can be used to determine which action is possible
+        row_int = 0
+        col_int = 0
+        cor = []
+        for row in self.contents:
+            for col in row:
+                if col == 'B':
+                    cor = [row_int,col_int] 
+                    return cor
+                else: 
+                    col_int+=1
+            row_int+=1
+            col_int = 0
+    
+    def convert(self):
+        im = Image.new(mode="RGB", 
+                       size=(self.columns*100,self.rows*100),
+                       color=(255,255,255)
+                       )
+        for wall in self.walls:
+            draw = ImageDraw.Draw(im)
+            x1 = wall[1]*100
+            x2 = x1+100
+            y1 = wall[0]*100
+            y2 = y1+100
+            draw.rectangle(xy = (x1, y1, x2, y2), 
+                fill = (0, 0, 0), 
+                #outline = (255, 255, 255), 
+                #width = 10
+            ) 
+            #im.show()
+        start_cor = self.det_Start()
+        for cor in self.visited:
+                draw.rectangle(xy = (cor[1]*100, cor[0]*100,cor[1]*100 + 100 , cor[0]*100 + 100), 
+                fill = (230, 200, 50), 
+                #outline = (255, 255, 255), 
+                #width = 10
+                )
+        draw.rectangle(xy = (start_cor[1]*100, start_cor[0]*100,start_cor[1]*100 + 100 , start_cor[0]*100 + 100), 
+            fill = (100, 200, 0), 
+            #outline = (255, 255, 255), 
+            #width = 10
+        ) 
+        end_cor = self.det_end()
+        draw.rectangle(xy = (end_cor[1]*100, end_cor[0]*100,end_cor[1]*100 + 100 , end_cor[0]*100 + 100), 
+            fill = (200, 20, 20), 
+            #outline = (255, 255, 255), 
+            #width = 10
+        )
+             
+           
+        im.show() 
     
     def solve(self):
         start_cor = self.det_Start()
+        end_cor = self.det_end()
         start_node = Node(None,self.det_actions(start_cor),start_cor) 
-        steps = self.DFS_maze(start_node,[0,5])
-        return steps
+        self.visited = self.DFS_maze(start_node,end_cor)
+        self.convert()
         
 maze1 = Maze("maze3.txt")
 #print(maze1.det_wall())
@@ -202,4 +234,4 @@ maze1 = Maze("maze3.txt")
 #start_cor = maze1.det_Start()
 #start_node = Node(None,maze1.det_actions(start_cor),start_cor) 
 #print(maze1.app_action(start_node,maze1.det_actions(start_cor)[0]).actions)
-print(maze1.solve())
+maze1.solve()
