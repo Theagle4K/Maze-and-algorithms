@@ -8,36 +8,6 @@ class Node():
         self.actions = actions #To keep what actions our Maze algorithm can apply
         self.state = state #What state is our Node in
               
-
-def BFS(Node = Node, goal = int):
-    frontier = []
-    visited = []
-    step = 0
-    
-    frontier.append(Node)
-    
-    while True:
-        
-        if len(frontier) == 0:
-            print("No Solution")
-            break
-        
-        if Node.state == goal:
-            break
-        else:
-            visited.append(Node)
-            del frontier[0]
-            for action in Node.actions:
-                if Action(Node.state, action) is not None:
-                    frontier.append(Action(Node.state, action))
-            if len(frontier) != 0:        
-                Node = frontier[0]    
-            
-        step+=1
-    return step
-
-#print(BFS(A,6))
-
 #Maze class
 class Maze():
     def __init__(self,filename):
@@ -60,11 +30,15 @@ class Maze():
         #Columns of our maze (X)
         self.columns = max(len(line) for line in self.contents)
         #Walls of our Maze 
-        self.walls = self.det_wall()
+        self.walls = []
         #To keep count of steps
         self.steps = 0
         #To keep count of visited tiles
         self.visited = []
+        #
+        self.start_cor = []
+        #
+        self.end_cor = []
         
     #Translates any coordinate to character (exists for testing reasons)    
     def cor_to_char(self,cor): #cor = [x,y], which x = row, y = col 
@@ -78,38 +52,21 @@ class Maze():
 #            raise Exception("Cordinates must be a number!")  
         return self.contents[cor[0]][cor[1]]
     
-    #Algorithm to determine walls
-    def det_wall(self): # All wall cordinates must be gathered in one [], which can be used to determine which action is possible
-        #Variables to keep track of coordinates
-        row_int = 0
-        col_int = 0
-        #Array of walls
-        walls = []
-        #Loop checks in every column in a row, 
+            
+    def det_props(self):
+        row_int = 0; col_int = 0
         for row in self.contents:
             for col in row:
-                #if it's "#" then it encountered a wall
-                if col == '#':
-                    walls.append([row_int,col_int]) 
+                if col == "A":
+                    self.start_cor = [row_int,col_int]
+                elif col == "B":
+                    self.end_cor = [row_int,col_int]
+                elif col == "#":
+                    self.walls.append([row_int,col_int])
                 col_int+=1
-            #Counters
             row_int+=1
             col_int = 0
-        return walls  
-    
-    def det_Start(self): # All wall cordinates must be gathered in one [], which can be used to determine which action is possible
-        row_int = 0
-        col_int = 0
-        cor = []
-        for row in self.contents:
-            for col in row:
-                if col == 'A':
-                    cor = [row_int,col_int] 
-                    return cor
-                else: 
-                    col_int+=1
-            row_int+=1
-            col_int = 0
+                    
      
     def app_action(self,node,action):
         newnode = Node(node,[],[node.state[0] + action[0],node.state[1] + action[1]])
@@ -131,8 +88,7 @@ class Maze():
             if Node.state == goal:
                 break
             else:
-                visited.append(Node.state)
-                
+                visited.append(Node.state)   
                 frontier.pop()
                 if Node.actions != []:
                     for action in Node.actions:
@@ -145,7 +101,7 @@ class Maze():
                 
             step+=1
         self.steps = step
-        return visited   
+        self.visited = visited   
 
     def BFS_maze(self, Node, goal):
         frontier = []
@@ -173,7 +129,7 @@ class Maze():
                 Node = frontier[0]               
             step+=1
         self.steps = step
-        return visited    
+        self.visited = visited    
 
     def det_actions(self,cor):
         actions = []
@@ -194,20 +150,6 @@ class Maze():
                 actions.append([0,1])  
         return actions   
     
-    def det_end(self): # All wall cordinates must be gathered in one [], which can be used to determine which action is possible
-        row_int = 0
-        col_int = 0
-        cor = []
-        for row in self.contents:
-            for col in row:
-                if col == 'B':
-                    cor = [row_int,col_int] 
-                    return cor
-                else: 
-                    col_int+=1
-            row_int+=1
-            col_int = 0
-    
     def convert(self):
         im = Image.new(mode="RGB", 
                        size=(self.columns*100,self.rows*100),
@@ -225,7 +167,7 @@ class Maze():
                 #width = 10
             ) 
             #im.show()
-        start_cor = self.det_Start()
+        start_cor = self.start_cor
         for cor in self.visited:
                 draw.rectangle(xy = (cor[1]*100, cor[0]*100,cor[1]*100 + 100 , cor[0]*100 + 100), 
                 fill = (230, 200, 50), 
@@ -237,28 +179,19 @@ class Maze():
             #outline = (255, 255, 255), 
             #width = 10
         ) 
-        end_cor = self.det_end()
+        end_cor = self.end_cor
         draw.rectangle(xy = (end_cor[1]*100, end_cor[0]*100,end_cor[1]*100 + 100 , end_cor[0]*100 + 100), 
             fill = (200, 20, 20), 
             #outline = (255, 255, 255), 
             #width = 10
         )
-             
-           
         im.show() 
     
     def solve(self):
-        start_cor = self.det_Start()
-        end_cor = self.det_end()
-        start_node = Node(None,self.det_actions(start_cor),start_cor) 
-        self.visited = self.BFS_maze(start_node,end_cor)
+        self.det_props()
+        start_node = Node(None,self.det_actions(self.start_cor),self.start_cor) 
+        self.DFS_maze(start_node,self.end_cor)
         self.convert()
         
-maze1 = Maze("maze3.txt")
-#print(maze1.det_wall())
-#print(maze1.det_actions([5,0]))
-#print(maze1.det_Start())
-#start_cor = maze1.det_Start()
-#start_node = Node(None,maze1.det_actions(start_cor),start_cor) 
-#print(maze1.app_action(start_node,maze1.det_actions(start_cor)[0]).actions)
+maze1 = Maze("maze2.txt")
 maze1.solve()
