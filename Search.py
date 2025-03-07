@@ -129,7 +129,91 @@ class Maze():
                 Node = frontier[0]               
             step+=1
         self.steps = step
-        self.visited = visited    
+        self.visited = visited 
+        
+    def GFBS_maze(self, Node, goal):
+        frontier = []
+        visited = []
+        step = 0   
+        frontier.append(Node) 
+        
+        while True:
+            
+            if len(frontier) == 0:
+                print("No solution")
+                break
+            if Node.state == goal:
+                break
+            else:
+                visited.append(Node.state)
+                frontier.pop()
+            if len(Node.actions) > 1 :
+                possible_tiles = []
+                for action in Node.actions:
+                    new_Node = self.app_action(Node,action)
+                    new_Node.actions = self.det_actions(new_Node.state)
+                    if new_Node.state not in visited:
+                        if len(possible_tiles) == 0:
+                            possible_tiles.append(new_Node)
+                        else:
+                            for i in range(0, len(possible_tiles)):
+                                if self.GetDifference(new_Node.state) > self.GetDifference(possible_tiles[0].state):
+                                    possible_tiles.insert(i,new_Node)
+                                    break
+                                else:
+                                    possible_tiles.append(new_Node)
+                if possible_tiles != []:
+                    for element in possible_tiles:
+                        frontier.append(element)
+            elif len(Node.actions) != []:
+                for action in Node.actions:
+                    new_Node = self.app_action(Node,action)
+                    new_Node.actions = self.det_actions(new_Node.state)
+                    if new_Node.state not in visited:
+                        frontier.append(new_Node)
+            if len(frontier) != 0:
+                Node = frontier[-1]       
+            step+=1
+        self.steps = step
+        self.visited = visited 
+        
+    def A_star(self,Node,goal):
+        visited = []
+        frontier = []
+        step = 0
+        frontier.append(Node)
+        
+        while True:
+            if len(frontier) == 0:
+                print("No solution")
+                break
+            if Node.state == goal:
+                break
+            else:
+                visited.append(Node.state)
+                for node in frontier:
+                    if node.state == Node.state:
+                        frontier.remove(node)
+
+            if Node.actions != []:
+                for action in Node.actions:
+                    new_Node = self.app_action(Node,action)
+                    new_Node.actions = self.det_actions(new_Node.state)
+                    if new_Node.state not in visited:
+                        frontier.append(new_Node)
+            if len(frontier) != 0:
+                closest = frontier[0]
+                for node in frontier:
+                    if self.GetDifference(node.state) < self.GetDifference(closest.state):
+                        closest = node
+                Node = closest               
+            step+=1
+        self.steps = step
+        self.visited = visited 
+                                
+                
+    def GetDifference(self, state):
+        return abs(state[0] - self.end_cor[0]) + abs(state[1] - self.end_cor[1])
 
     def det_actions(self,cor):
         actions = []
@@ -190,7 +274,7 @@ class Maze():
     def solve(self):
         self.det_props()
         start_node = Node(None,self.det_actions(self.start_cor),self.start_cor) 
-        self.DFS_maze(start_node,self.end_cor)
+        self.A_star(start_node,self.end_cor)
         self.convert()
         
 maze1 = Maze("maze2.txt")
